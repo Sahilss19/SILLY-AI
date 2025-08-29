@@ -7,8 +7,9 @@ from typing import List, Dict, Any, Tuple
 from serpapi import GoogleSearch
 import logging
 
-# Configure logging
+# ---------------- LOGGING ----------------
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 # ---------------- SYSTEM INSTRUCTION ----------------
 system_instructions = """
@@ -45,8 +46,11 @@ def init_model(api_key: str):
     return chat
 
 # ---------------- RULE-BASED SEARCH DETECTION ----------------
-def should_search_web(user_query: str) -> bool:
-    """Rule-based quick detection for when to use web search."""
+def should_search_web(user_query: str, history=None) -> bool:
+    """
+    Rule-based detection for when to use web search.
+    history is optional to allow extra context without breaking calls.
+    """
     keywords = ["weather", "temperature", "news", "latest", "today", "tomorrow",
                 "who is", "what is", "population", "price", "time in", "score"]
     return any(k in user_query.lower() for k in keywords)
@@ -58,18 +62,20 @@ def get_llm_response(
     api_key: str
 ) -> Tuple[str, List[Dict[str, Any]]]:
     """
-    Generate a response from Gemini LLM, with caching for simple queries.
+    Generate a response from Gemini LLM.
+    Handles quick replies and persistent chat session.
     """
     try:
         normalized = user_query.strip().lower()
 
-        # ✅ Hardcoded instant replies (fast path)
+        # Hardcoded instant replies (fast path)
         quick_replies = {
             "hello": "Hey buddy, welcome to Silly Yard :) How can I make your day brighter? 😄",
             "hi": "Hey buddy, welcome to Silly Yard :) How can I make your day brighter? 😄",
             "hey": "Hey buddy, welcome to Silly Yard :) How can I make your day brighter? 😄",
             "bye": "ooooo noooo , ok buddy Catch you later👋",
             "goodbye": "ooooo noooo , ok buddy Catch you later👋",
+            "good night": "Ok Buddy , GOOD NIGHT :) Sleep tight! 🌙😴",
             "see you": "ooooo noooo , ok buddy Catch you later👋",
             "thanks": "Anytime, amigo! 🤝 Always here to help.",
             "thank you": "Anytime, amigo! 🤝 Always here to help.",
@@ -81,7 +87,11 @@ def get_llm_response(
             history.append({"role": "model", "parts": [reply]})
             return reply, history
 
-        # ✅ Use persistent chat session (no re-init each time)
+        # Check if web search needed
+        if should_search_web(user_query, history):
+            return get_web_response(user_query, history, api_key, serp_api_key="YOUR_SERPAPI_KEY")
+
+        # Persistent Gemini chat
         chat = init_model(api_key)
         response = chat.send_message(user_query)
         return response.text, chat.history
@@ -120,3 +130,17 @@ def get_web_response(
     except Exception as e:
         logger.error(f"Error in web search: {e}")
         return "Uh-oh 😬 I hit a snag while searching the web.", history
+
+# ---------------- USAGE EXAMPLE ----------------
+if __name__ == "__main__":
+    api_key = "YOUR_GEMINI_API_KEY"
+    chat_history = []
+
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() in ["exit", "quit"]:
+            print("SILLY AI: Bye bye! 👋")
+            break
+
+        reply, chat_history = get_llm_response(user_input, chat_history, api_key)
+        print(f"SILLY AI: {reply}")
