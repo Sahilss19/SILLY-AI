@@ -1,75 +1,178 @@
-# Day 15: Introducing WebSockets for Real-Time Communication
+<p align="center">
+  <img src="image/Silly AI .png" width="120" height="120" alt="Silly AI logo" />
+</p>
 
-Welcome to Day 15 of the 30 Days of Voice Agents Challenge\! Today, we're laying the groundwork for a faster, more interactive experience by adding **WebSocket support** to our backend. This is a foundational step towards enabling real-time, bidirectional communication between the client and the server.
+<h1 align="center">🎭 Silly AI — Smart Interactive Light-hearted Language Yielding AI :) </h1>
 
-## 🧠 What We Built
+<p align="center">
+  A quirky, PWA-ready voice assistant that listens, laughs, and replies with style.  
+  <br/>Speak naturally, get witty responses, hear lifelike voice replies, and enjoy a playful UI.  
+  <br/><b>Because serious AIs are boring!</b> ✨
+</p>
 
-  * **New WebSocket Endpoint**: A new `/ws` endpoint has been added to the FastAPI application. This endpoint establishes a persistent, two-way communication channel with the client.
-  * **Simple Echo Functionality**: For this initial implementation, the WebSocket serves as a basic echo test. When the server receives a text message through the connection, it sends a response back confirming the message was received (e.g., "Message text was: \[data]").
-  * **Foundation for Future Streaming**: While the main chat functionality still uses the HTTP endpoint, this WebSocket is the first step toward enabling real-time audio streaming. This will eventually allow for faster transcription and more fluid, low-latency conversations with the agent.
+<p align="center">
+  <a href="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white"><img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+" /></a>
+  <a href="https://img.shields.io/badge/FastAPI-⚡-009688?logo=fastapi&logoColor=white"><img src="https://img.shields.io/badge/FastAPI-⚡-009688?logo=fastapi&logoColor=white" alt="FastAPI" /></a>
+  <a href="https://murf.ai/"><img src="https://img.shields.io/badge/MurfAI-🎤-purple?logo=google-voice&logoColor=white" alt="Murf AI" />
+  </a>
+  <a href="https://ai.google/"><img src="https://img.shields.io/badge/Gemini-∞-4285F4?logo=google&logoColor=white" alt="Gemini" />
+  </a>
+  <a href="https://serpapi.com/"><img src="https://img.shields.io/badge/SerpAPI-🔍-00C58E?logo=google&logoColor=white" alt="SerpAPI" />
+  </a>
 
------
+---
 
-## 🛠 Tech Stack
+## ✨ Highlights
 
-The tech stack has been updated to include WebSockets, a key technology for real-time web applications.
+- 🎤 **Conversational voice chat** with fun personality  
+- 📝 **Text-only chat** for quick testing  
+- 🔊 **Speech-to-text & lifelike voice replies**  
+- 🎨 **Playful, animated UI** with smooth interactions  
+- 🔐 **API key config** via `.env` or in-app settings  
 
-  * **Backend**: `FastAPI`, `uvicorn`, `requests`, `assemblyai`, `google-generativeai`, `python-dotenv`, **WebSockets**
-  * **Frontend**: `HTML`, `Bootstrap`, `JavaScript`, `MediaRecorder` API
-  * **AI APIs**:
-      * Murf AI (Text-to-Speech)
-      * AssemblyAI (Speech-to-Text)
-      * Google Gemini (Large Language Model)
+<div align="center">
+  <img src="image/main.png" alt="Silly AI screenshot" width="85%" style="border-radius: 12px;" />
+  <br/>
+</div>
 
------
+---
 
-## 🚀 Run the App
+## 🧭 Table of Contents
 
-The instructions to run the main application are unchanged. The WebSocket functionality is a backend addition and does not yet have a corresponding UI component.
+1. [Quickstart](#-quickstart)
+2. [Environment & Config](#-environment--config)
+3. [Architecture](#-architecture)
+4. [Core Features](#-core-features)
+5. [Project Structure](#-project-structure)
+6. [Deployment](#-deployment)
+7. [License](#-license)
 
-1.  **Navigate to the project directory:**
-    ```bash
-    cd day-15/
-    ```
-2.  **Install the required dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  **Create a `.env` file** and add your API keys:
-    ```
-    MURF_API_KEY="your_murf_api_key_here"
-    ASSEMBLYAI_API_KEY="your_assemblyai_api_key_here"
-    GEMINI_API_KEY="your_gemini_api_key_here"
-    ```
-4.  **Run the FastAPI server:**
-    ```bash
-    uvicorn main:app --reload
-    ```
-5.  **Open your browser** and visit `http://localhost:8000`. The main chat agent will function as it did on Day 14.
+---
 
------
+## 🚀 Quickstart
 
+### Prerequisites
+- Python 3.10+  
+- API keys for Speech-to-Text, LLM, and TTS  
+
+
+
+python -m venv .venv
+source .venv/bin/activate   # macOS/Linux
+. .\.venv\Scripts\Activate.ps1  # Windows
+
+# Install deps
+pip install -r requirements.txt
+
+# Add your keys to .env
+
+## 🔐 Environment & Config
+
+Create a `.env` file inside `uploads/`:
+
+```env
+ASSEMBLYAI_API_KEY=your_key
+GEMINI_API_KEY=your_key
+MURF_API_KEY=your_key
+SECRET_KEY=optional_secret_for_encryption
+
+```
+
+### 🧩 Architecture  
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as 👤 User
+    participant B as 🌐 Browser (Silly AI UI)
+    participant API as ⚡ FastAPI Backend
+    participant STT as 🎙 AssemblyAI (STT)
+    participant LLM as 🧠 Google Gemini (LLM)
+    participant TTS as 🔊 Murf AI (TTS)
+
+    U->>B: 🎤 Speak
+    B->>API: 📩 POST /llm/query (audio + session_id)
+    API->>STT: 🎙 Transcribe Audio
+    STT-->>API: 📄 Transcript
+    API->>LLM: 💬 Chat with Context (session history)
+    LLM-->>API: 🤖 LLM Response
+    API->>TTS: 🔊 Convert to Voice
+    TTS-->>API: 🎵 Audio File (mp3)
+    API-->>B: 📦 { transcript, llmResponse, audioFile }
+    B-->>U: 📝 Show Text + ▶ Play Audio
+
+```
+
+---
+
+### **Quick Start (Installation Guide)**
+```markdown
+## 🚀 Quick Start
+
+```bash
+# Clone repo
+git clone https://github.com/your-username/silly-ai.git
+cd silly-ai
+
+# Install dependencies
+npm install
+
+# Run backend
+cd backend
+npm start
+
+# Run frontend
+cd frontend
+npm start
+
+```
+
+## 🧱 Core Features
+
+🎤 Voice & Text Chat → Speak or type, Silly AI replies
+
+🧠 Session Memory → Context preserved for ongoing chats
+
+🔗 Speech Pipeline → AssemblyAI (STT) → Gemini (LLM) → Murf (TTS)
+
+😎 Playful Persona → Replies with humor & casual tone
+
+📱 PWA Ready → Works on desktop & mobile, installable as an app
+
+---
+
+### **Project Structure**
+```markdown
 ## 📂 Project Structure
 
-The primary change in the project is the addition of the WebSocket endpoint in the main application file.
+Silly-AI/
+├─ app.py                # FastAPI app
+├─ config.py             # Config & key mgmt
+├─ schemas.py            # Pydantic models
+├─ services/             # API integrations (STT, LLM, TTS)
+├─ templates/            # HTML frontend
+├─ static/               # JS, CSS, icons
+├─ uploads/              # User configs & data
+├─ image/                # Logo & screenshots
+├─ requirements.txt      # Python deps
+├─ Dockerfile            # Deployment
+└─ README.md             # You are here
 
 ```
-day-15/
-├── main.py           # Updated with the new @app.websocket("/ws") endpoint
-├── config.py
-├── services/
-├── schemas.py
-├── templates/
-│   └── index.html
-├── static/
-│   └── script.js
-├── requirements.txt
-└── .env
-```
 
------
 
-## ✅ Completed Days
+## ☁️ Deployment
+▶ Local
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
-  * **Day 01 - 14**: From basic server setup to a fully documented, refactored conversational agent.
-  * **Day 15**: Added a foundational **WebSocket endpoint** to the server for future real-time communication.
+## 🐳 Render / Docker
+docker build -t silly-ai .
+docker run -p 8000:8000 silly-ai
+
+
+## 🚀 Live Demo
+🔗 [Click here to try SillyAI](https://silly19-ai.onrender.com)
+
+## 📄 License
+
+MIT License © 2025 Sahil Kulria
