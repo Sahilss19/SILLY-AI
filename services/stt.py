@@ -38,6 +38,7 @@ class AssemblyAIStreamingTranscriber:
         self.on_partial_callback = on_partial_callback
         self.on_final_callback = on_final_callback
 
+        # It's okay if api_key is None; AssemblyAI SDK may read from env as fallback
         self.client = StreamingClient(
             StreamingClientOptions(
                 api_key=api_key,
@@ -68,7 +69,10 @@ class AssemblyAIStreamingTranscriber:
 
         if event.end_of_turn:
             if self.on_final_callback:
-                self.on_final_callback(text)
+                try:
+                    self.on_final_callback(text)
+                except Exception as e:
+                    print("on_final_callback error:", e)
 
             if not event.turn_is_formatted:
                 try:
@@ -77,10 +81,19 @@ class AssemblyAIStreamingTranscriber:
                     print("set_params error:", set_err)
         else:
             if self.on_partial_callback:
-                self.on_partial_callback(text)
+                try:
+                    self.on_partial_callback(text)
+                except Exception as e:
+                    print("on_partial_callback error:", e)
 
     def stream_audio(self, audio_chunk: bytes):
-        self.client.stream(audio_chunk)
+        try:
+            self.client.stream(audio_chunk)
+        except Exception as e:
+            print("Error streaming audio to AssemblyAI:", e)
 
     def close(self):
-        self.client.disconnect(terminate=True)
+        try:
+            self.client.disconnect(terminate=True)
+        except Exception as e:
+            print("Error disconnecting AAI client:", e)

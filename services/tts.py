@@ -10,31 +10,51 @@ logger = logging.getLogger(__name__)
 
 MURF_API_URL = "https://api.murf.ai/v1/speech"
 
-# Ensure uploads folder exists
+# Ensure uploads folder exists (two levels up -> project root / uploads)
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
-UPLOADS_DIR.mkdir(exist_ok=True)
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
-def speak(text: str, api_key: str, output_file: str = "stream_output.wav"):
+def speak(text: str, api_key: str, output_file: str = "stream_output.wav", voice_id: str = "en-IN-priya"):
     """
     Convert text to speech using Murf API and save audio in uploads folder.
+    Returns bytes of the generated audio or None on failure.
     """
-    client = Murf(api_key=api_key)
+    if not api_key:
+        logger.error("Murf API key is missing.")
+        return None
+
+    try:
+        client = Murf(api_key=api_key)
+    except Exception as e:
+        logger.exception("Failed to create Murf client: %s", e)
+        return None
 
     file_path = UPLOADS_DIR / output_file
 
     # Start with a clean file
-    open(file_path, "wb").close()
+    try:
+        open(file_path, "wb").close()
+    except Exception:
+        pass
 
-    res = client.text_to_speech.stream(
-        text=text,
-        voice_id = "en-IN-priya",
-        style="Conversational"
-    )
+    try:
+        res = client.text_to_speech.stream(
+            text=text,
+            voice_id=voice_id,
+            style="Conversational"
+        )
+    except Exception as e:
+        logger.exception("Murf text_to_speech error: %s", e)
+        return None
 
     audio_bytes = b""
-    for audio_chunk in res:
-        audio_bytes += audio_chunk
-        with open(file_path, "ab") as f:
-            f.write(audio_chunk)
+    try:
+        for audio_chunk in res:
+            audio_bytes += audio_chunk
+            with open(file_path, "ab") as f:
+                f.write(audio_chunk)
+    except Exception as e:
+        logger.exception("Error while reading streaming audio chunks: %s", e)
+        return None
 
     return audio_bytes
